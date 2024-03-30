@@ -1,5 +1,7 @@
 /**
- * Write a description of class Horse here.
+ * The class Horse represents a horse in a race
+ * It can move forward, fall, go back to start, 
+ * and change its confidence and symbol.
  * 
  * @author Vera Malkova 
  * @version 17 March 2024
