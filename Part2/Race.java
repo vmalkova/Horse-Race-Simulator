@@ -1,5 +1,4 @@
 import java.util.concurrent.TimeUnit;
-import java.util.*;
 import java.lang.Math;
 
 /**
@@ -12,7 +11,9 @@ import java.lang.Math;
 public class Race
 {
     private int raceLength;
-    private ArrayList<Horse> horses;
+    private Horse lane1Horse;
+    private Horse lane2Horse;
+    private Horse lane3Horse;
 
     /**
      * Constructor for objects of class Race
@@ -24,20 +25,9 @@ public class Race
     {
         // initialise instance variables
         raceLength = distance;
-        horses = new ArrayList<Horse>();
-    }
-
-    // Main method
-    public static void main(String[] args)
-    {
-        Race race = new Race(15);
-        int MAX_LANES = 3;
-        for (int i = 0; i < MAX_LANES; i++)
-        {
-            race.addHorse();
-        }
-        race.startRace();
-        return;
+        lane1Horse = null;
+        lane2Horse = null;
+        lane3Horse = null;
     }
     
     /**
@@ -46,15 +36,24 @@ public class Race
      * @param theHorse the horse to be added to the race
      * @param laneNumber the lane that the horse will be added to
      */
-    public void addHorse()
+    public void addHorse(Horse theHorse, int laneNumber)
     {
-        Random rand = new Random();
-        String[] names = {"Albert", "Bertie", "Charlie", "Daisy", "Eddie", "Fredy"};
-        double[] confidences = {0.9, 0.7, 0.5, 0.3};
-
-        int i = rand.nextInt(names.length);
-        int j = rand.nextInt(confidences.length);
-        horses.add(new Horse(names[i].charAt(0), names[i], confidences[j]));
+        if (laneNumber == 1)
+        {
+            lane1Horse = theHorse;
+        }
+        else if (laneNumber == 2)
+        {
+            lane2Horse = theHorse;
+        }
+        else if (laneNumber == 3)
+        {
+            lane3Horse = theHorse;
+        }
+        else
+        {
+            System.out.println("Cannot add horse to lane " + laneNumber + " because there is no such lane");
+        }
     }
     
     /**
@@ -69,38 +68,24 @@ public class Race
         boolean finished = false;
         
         //reset all the lanes (all horses not fallen and back to 0). 
-        for (Horse horse : horses)
-        {
-            horse.goBackToStart();
-        }
-
-        int fallen_horses = 0;
+        lane1Horse.goBackToStart();
+        lane2Horse.goBackToStart();
+        lane3Horse.goBackToStart();
                       
-        while (!finished || fallen_horses < horses.size() - 1)
+        while (!finished)
         {
             //move each horse
-            for (Horse horse : horses)
-            {
-                if (horse.hasFallen())
-                {
-                    fallen_horses++;
-                }
-                moveHorse(horse);
-            }
+            moveHorse(lane1Horse);
+            moveHorse(lane2Horse);
+            moveHorse(lane3Horse);
                         
             //print the race positions
             printRace();
             
             //if any of the three horses has won the race is finished
-            for (Horse horse : horses)
+            if ( raceWonBy(lane1Horse) || raceWonBy(lane2Horse) || raceWonBy(lane3Horse) )
             {
-                if (raceWonBy(horse))
-                {
-                    finished = true;
-                    System.out.println();
-                    System.out.println(horse.getName() + " has won");
-                    return;
-                }
+                finished = true;
             }
            
             //wait for 100 milliseconds
@@ -108,10 +93,6 @@ public class Race
                 TimeUnit.MILLISECONDS.sleep(100);
             }catch(Exception e){}
         }
-
-        System.out.println();
-        System.out.println("No winner");
-        return;
     }
     
     /**
@@ -171,12 +152,15 @@ public class Race
         
         multiplePrint('=',raceLength+3); //top edge of track
         System.out.println();
-
-        for (int i = 0; i < horses.size(); i++)
-        {
-            printLane(horses.get(i));
-            System.out.println();
-        }
+        
+        printLane(lane1Horse);
+        System.out.println();
+        
+        printLane(lane2Horse);
+        System.out.println();
+        
+        printLane(lane3Horse);
+        System.out.println();
         
         multiplePrint('=',raceLength+3); //bottom edge of track
         System.out.println();    
