@@ -1,7 +1,6 @@
 import java.util.concurrent.TimeUnit;
 import java.util.*;
 import java.lang.Math;
-import java.text.DecimalFormat;
 
 /**
  * A three-horse race, each horse running in its own lane
@@ -32,13 +31,44 @@ public class Race
     public static void main(String[] args)
     {
         Race race = new Race(15);
-        int MAX_LANES = 3;
-        for (int i = 0; i < MAX_LANES; i++)
+        int num_lanes;
+        final String MENU = "Again (A) | New race (N) | Quit (Q)";
+        String instruction = "N";
+
+        while (!instruction.equals("Q"))
         {
-            race.addHorse();
+            if (instruction.equals("N"))
+            {
+                race = new Race(15);
+                num_lanes = 3;
+                for (int i = 0; i < num_lanes; i++)
+                {
+                    race.addHorse();
+                }
+                race.startRace();
+            }
+            else if (instruction.equals("A"))
+            {
+                race.startRace();
+            }
+            else
+            {
+                System.out.println("Invalid input");
+            }
+
+            System.out.println();
+            instruction = input(MENU);
         }
-        race.startRace();
+
         return;
+    }
+
+    // Return the input from a user
+    public static String input(String message)
+    {
+        final Scanner scanner = new Scanner(System.in);
+        System.out.println(message);
+        return scanner.nextLine().toUpperCase();
     }
     
     /**
@@ -49,14 +79,14 @@ public class Race
      */
     public void addHorse()
     {
-        Random rand = new Random();
-        String[] names = {"Albert", "Bertie", "Charlie", "Daisy", "Eddie",
-                         "Fredy", "George", "Hannah", "Ivy", "Jack", "Katie"};
-        double[] confidences = {0.7, 0.6, 0.5, 0.4, 0.3};
+        final Random RAND = new Random();
+        final String[] NAMES = {"Albert", "Bertie", "Charlie", "Daisy", "Eddie",
+                                "Fredy", "George", "Hannah", "Ivy", "Jack", "Katie"};
+        final double[] CONFIDENCES = {0.7, 0.6, 0.5, 0.4, 0.3};
+        final int i = RAND.nextInt(NAMES.length);
+        final int j = RAND.nextInt(CONFIDENCES.length);
 
-        int i = rand.nextInt(names.length);
-        int j = rand.nextInt(confidences.length);
-        horses.add(new Horse(names[i].charAt(0), names[i].toUpperCase(), confidences[j]));
+        horses.add(new Horse(NAMES[i].charAt(0), NAMES[i].toUpperCase(), CONFIDENCES[j]));
     }
     
     /**
@@ -137,9 +167,9 @@ public class Race
             if (Math.random() < (0.1*theHorse.getConfidence()*theHorse.getConfidence()))
             {
                 theHorse.fall();
-                double old_conf = theHorse.getConfidence();
+                final double OLD_CONF = theHorse.getConfidence();
                 double percent_done = (double)theHorse.getDistanceTravelled()/raceLength;
-                double new_conf = 0.1 + (0.4 + percent_done)*old_conf*5/9;
+                double new_conf = 0.1 + (0.4 + percent_done)*OLD_CONF*5/9;
                 new_conf = (int)(Math.round(new_conf*10))/10.0;
                 theHorse.setConfidence(new_conf);
             }
@@ -156,8 +186,8 @@ public class Race
     {
         if (theHorse.getDistanceTravelled() == raceLength)
         {
-            double old_conf = theHorse.getConfidence();
-            double new_conf = 1.8*old_conf - old_conf*old_conf;
+            final double OLD_CONF = theHorse.getConfidence();
+            double new_conf = 1.8*OLD_CONF - OLD_CONF*OLD_CONF;
             new_conf = 0.1 + new_conf * 80 / 81;
             new_conf = (int)(Math.round(new_conf*10))/10.0;
             theHorse.setConfidence(new_conf);

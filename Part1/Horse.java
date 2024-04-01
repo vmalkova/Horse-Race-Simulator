@@ -62,6 +62,7 @@ public class Horse
     
     public void goBackToStart()
     {
+        this.hasFallen = false;
         this.distanceTravelled = 0;
     }
     
@@ -136,7 +137,7 @@ public class Horse
         System.out.println(horse.hasFallen() == true);
         System.out.print("  goBackToStart ---- ");
         horse.goBackToStart();
-        System.out.println(horse.getDistanceTravelled() == 0);
+        System.out.println(horse.getDistanceTravelled() == 0 && horse.hasFallen() == false);
         System.out.print("  setConfidence: " + horse.confidence + " ---- ");
         horse.setConfidence(0.7);
         System.out.println(horse.getConfidence() == 0.7);
