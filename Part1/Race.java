@@ -1,14 +1,13 @@
 import java.util.concurrent.TimeUnit;
 import java.util.*;
 import java.lang.Math;
-import java.lang.reflect.Array;
 
 /**
  * A three-horse race, each horse running in its own lane
  * for a given distance
  * 
- * @author McFarewell
- * @version 1.0
+ * @author Vera Malkova
+ * @version 20 April 2024
  */
 public class Race
 {
