@@ -32,8 +32,6 @@ public class Horse
         this.hasFallen = false;
     }
     
-    
-    
     //Other methods of class Horse
     public void fall()
     {

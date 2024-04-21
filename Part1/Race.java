@@ -1,6 +1,7 @@
 import java.util.concurrent.TimeUnit;
 import java.util.*;
 import java.lang.Math;
+import java.lang.reflect.Array;
 
 /**
  * A three-horse race, each horse running in its own lane
@@ -30,7 +31,7 @@ public class Race
     // Main method
     public static void main(String[] args)
     {
-        Race race = new Race(15);
+        Race race = new Race(5);
         int num_lanes;
         final String MENU = "Again (A) | New race (N) | Quit (Q)";
         String instruction = "N";
@@ -39,7 +40,7 @@ public class Race
         {
             if (instruction.equals("N"))
             {
-                race = new Race(15);
+                race = new Race(5);
                 num_lanes = 3;
                 for (int i = 0; i < num_lanes; i++)
                 {
@@ -122,12 +123,9 @@ public class Race
             printRace();
             
             //if any of the three horses has won the race is finished
-            for (Horse horse : horses)
+            if (raceWon())
             {
-                if (raceWonBy(horse))
-                {
-                    return;
-                }
+                return;
             }
            
             //wait for 100 milliseconds
@@ -182,24 +180,39 @@ public class Race
      * @param theHorse The horse we are testing
      * @return true if the horse has won, false otherwise.
      */
-    private boolean raceWonBy(Horse theHorse)
+    private boolean raceWon()
     {
-        if (theHorse.getDistanceTravelled() == raceLength)
+        ArrayList<Horse> winners = new ArrayList<Horse>();
+        for (Horse horse: this.horses)
+        {
+            if (horse.getDistanceTravelled() == this.raceLength)
+            {
+                winners.add(horse);
+            }
+        }
+        if (winners.size() == 0)
+        {
+            return false;
+        }
+        System.out.println();
+        if (winners.size() == 1)
+        {
+            System.out.println("Winner:");
+        }
+        else{
+            System.out.println("Winners:");
+        }
+        for (Horse theHorse: winners)
         {
             final double OLD_CONF = theHorse.getConfidence();
             double new_conf = 1.8*OLD_CONF - OLD_CONF*OLD_CONF;
             new_conf = 0.1 + new_conf * 80 / 81;
             new_conf = (int)(Math.round(new_conf*10))/10.0;
             theHorse.setConfidence(new_conf);
-
-            System.out.println();
-            System.out.print(theHorse.getName() + " (new confidence " + new_conf);
-            System.out.println(") has won");
-
-            return true;
+            System.out.print(" - " + theHorse.getName());
+            System.out.println(" (new confidence " + new_conf + ") has won");
         }
-
-        return false;
+        return true;
     }
     
     /***
