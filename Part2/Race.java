@@ -27,11 +27,16 @@ public class Race
         horses = new ArrayList<Horse>();
     }
 
+    public ArrayList<Horse> getHorses()
+    {
+        return this.horses;
+    }
+
     // Main method
     public static void main(String[] args)
     {
         Race race = new Race(5);
-        int num_lanes;
+        int numLanes;
         final String MENU = "Again (A) | New race (N) | Quit (Q)";
         String instruction = "N";
 
@@ -40,8 +45,8 @@ public class Race
             if (instruction.equals("N"))
             {
                 race = new Race(5);
-                num_lanes = 3;
-                for (int i = 0; i < num_lanes; i++)
+                numLanes = 3;
+                for (int i = 0; i < numLanes; i++)
                 {
                     race.addHorse();
                 }
@@ -80,13 +85,28 @@ public class Race
     public void addHorse()
     {
         final Random RAND = new Random();
-        final String[] NAMES = {"Albert", "Bertie", "Charlie", "Daisy", "Eddie",
-                                "Fredy", "George", "Hannah", "Ivy", "Jack", "Katie"};
-        final double[] CONFIDENCES = {0.7, 0.6, 0.5, 0.4, 0.3};
-        final int i = RAND.nextInt(NAMES.length);
-        final int j = RAND.nextInt(CONFIDENCES.length);
+        ArrayList<String> taken_names = new ArrayList<String>();
+        ArrayList<String> names = new ArrayList<String>(
+                                    Arrays.asList("Albert", "Bertie", "Charlie", "Daisy",
+                                        "Eddie", "Fredy", "George", "Hannah", "Ivy", "Jack", 
+                                        "Katie", "Lenny", "Molly", "Nancy", "Oscar", "Penny", 
+                                        "Quincy", "Ricky", "Sally", "Tommy", "Ursula", "Vicky", 
+                                        "Willy", "Xander", "Yvonne", "Zack"));
+        for (Horse horse : horses)
+        {
+            taken_names.add(horse.getName());
+        }
+        for (String name : taken_names) {
+            if (Arrays.asList(names).contains(name)) {
+                names.remove(name);
+            }
+        }
+        int i = RAND.nextInt(names.size());
 
-        horses.add(new Horse(NAMES[i].charAt(0), NAMES[i].toUpperCase(), CONFIDENCES[j]));
+        final double[] CONFIDENCES = {0.7, 0.6, 0.5, 0.4, 0.3};
+        final int J = RAND.nextInt(CONFIDENCES.length);
+
+        horses.add(new Horse(names.get(i).charAt(0), names.get(i).toUpperCase(), CONFIDENCES[J]));
     }
     
     /**
