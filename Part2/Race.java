@@ -59,7 +59,8 @@ public class Race
                 numLanes = 3;
                 for (int i = 0; i < numLanes; i++)
                 {
-                    race.addHorse();
+                    Horse horse = race.generateHorse();
+                    race.addHorse(horse);
                 }
                 race.startRace();
             }
@@ -86,6 +87,32 @@ public class Race
         System.out.println(message);
         return scanner.nextLine().toUpperCase();
     }
+
+    public Horse generateHorse()
+    {
+        final Random RAND = new Random();
+        ArrayList<String> taken_names = new ArrayList<String>();
+        ArrayList<String> names = new ArrayList<String>(
+                                    Arrays.asList("ALBERT", "BERTIE", "CHARLIE", "DAISY",
+                                        "EDDIE", "FREDDIE", "GEORGE", "HARRY", "IVY", "JACK",
+                                        "KATIE", "LILY", "MOLLY", "NANCY", "OLLIE", "PENNY",
+                                        "QUEENIE", "ROSIE", "SOPHIE", "TOMMY", "URSULA",
+                                        "VICTOR", "WILLIE", "XANDER", "YVONNE", "ZARA"));
+        for (Horse horse : horses)
+        {
+            taken_names.add(horse.getName());
+        }
+        for (String name : taken_names) {
+            name = name.toUpperCase();
+            names.remove(name);
+        }
+        final int I = RAND.nextInt(names.size());
+
+        final double CONFIDENCE = (RAND.nextInt(9) + 1)/10.0;
+
+        Horse horse = new Horse(names.get(I).charAt(0), names.get(I).toUpperCase(), CONFIDENCE);
+        return horse;
+    }
     
     /**
      * Adds a horse to the race in a given lane
@@ -93,31 +120,15 @@ public class Race
      * @param theHorse the horse to be added to the race
      * @param laneNumber the lane that the horse will be added to
      */
-    public void addHorse()
+    public void addHorse(Horse theHorse)
     {
-        final Random RAND = new Random();
-        ArrayList<String> taken_names = new ArrayList<String>();
-        ArrayList<String> names = new ArrayList<String>(
-                                    Arrays.asList("Albert", "Bertie", "Charlie", "Daisy",
-                                        "Eddie", "Fredy", "George", "Hannah", "Ivy", "Jack", 
-                                        "Katie", "Lenny", "Molly", "Nancy", "Oscar", "Penny", 
-                                        "Quincy", "Ricky", "Sally", "Tommy", "Ursula", "Vicky", 
-                                        "Willy", "Xander", "Yvonne", "Zack"));
-        for (Horse horse : horses)
-        {
-            taken_names.add(horse.getName());
-        }
-        for (String name : taken_names) {
-            if (Arrays.asList(names).contains(name)) {
-                names.remove(name);
-            }
-        }
-        int i = RAND.nextInt(names.size());
+        horses.add(theHorse);
+    }
 
-        final double[] CONFIDENCES = {0.7, 0.6, 0.5, 0.4, 0.3};
-        final int J = RAND.nextInt(CONFIDENCES.length);
-
-        horses.add(new Horse(names.get(i).charAt(0), names.get(i).toUpperCase(), CONFIDENCES[J]));
+    public void removeHorse(Horse horse)
+    {
+        this.horses.remove(horse);
+        return;
     }
     
     /**
