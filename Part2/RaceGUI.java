@@ -27,17 +27,7 @@ public class RaceGUI {
         Label label = new Label(text);
         label.setFont(new Font("Arial", Font.BOLD, 20));
         label.setAlignment(Label.CENTER);
-        label.setPreferredSize(new Dimension(300, 50));
-        label.setForeground(darkBrown);
-        return label;
-    }
-
-    public Label getText(String text)
-    {
-        Label label = new Label(text);
-        label.setFont(new Font("Arial", Font.PLAIN, 16));
-        label.setAlignment(Label.LEFT);
-        label.setPreferredSize(new Dimension(300, 20));
+        label.setPreferredSize(new Dimension(270, 50));
         label.setForeground(darkBrown);
         return label;
     }
@@ -84,21 +74,74 @@ public class RaceGUI {
                 startRaceGUI();
             });
         }
+        else if (text.equals("Update"))
+        {
+            button.setPreferredSize(new Dimension(80, 30));
+            button.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        }
         return button;
+    }
+
+    public JPanel getPanel(int rows, int cols, int padding)
+    {
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(padding, padding, padding, padding));
+        panel.setLayout(new GridLayout(rows, cols, 10, 10));
+        panel.setBackground(this.lightBrown);
+        return panel;
     }
 
     public JPanel getButtons(String[] labels)
     {
-        JPanel buttons = new JPanel();
-        buttons.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        buttons.setLayout(new GridLayout(labels.length, 1, 10, 10));
-        buttons.setBackground(this.lightBrown);
+        JPanel buttons = getPanel(labels.length, 1, 10);
         for (String label : labels)
         {
             JButton button = getButton(label);
             buttons.add(button);
         }
         return buttons;
+    }
+
+    public Label getText(String text)
+    {
+        Label label = new Label(text);
+        label.setFont(new Font("Arial", Font.PLAIN, 16));
+        label.setAlignment(Label.LEFT);
+        label.setPreferredSize(new Dimension(50, 20));
+        label.setForeground(darkBrown);
+        return label;
+    }
+
+    public JTextField getTextField(String text)
+    {
+        JTextField textField = new JTextField();
+        textField.setHorizontalAlignment(JTextField.LEFT);
+        textField.setPreferredSize(new Dimension(50, 30));
+        textField.setFont(new Font("Arial", Font.PLAIN, 16));
+        textField.setText(text);
+        textField.setEditable(false);
+        textField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        textField.setCaretColor(warmWhite);
+        textField.setBackground(warmWhite);
+        textField.setForeground(darkBrown);
+        textField.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                textField.setText("");
+                textField.setForeground(darkBrown);
+                textField.setEditable(true);
+                textField.setCaretColor(darkBrown);
+            }
+        });
+        return textField;
+    }
+
+    public JTextField addError(String text, JTextField textField)
+    {
+        textField.setText(text);
+        textField.setForeground(Color.RED);
+        textField.setCaretColor(warmWhite);
+        textField.setEditable(false);
+        return textField;
     }
 
     public void mainMenu()
@@ -135,24 +178,49 @@ public class RaceGUI {
 
     public void editTrack()
     {
+        // Title
         JFrame frame = new JFrame("Edit Track");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Label title = getTitle("Edit Track");
         frame.add(title, BorderLayout.NORTH);
-        JPanel horseInfo = new JPanel();
-        horseInfo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        horseInfo.setLayout(new GridLayout(currentRace.getHorses().size(), 1, 10, 10));
-        horseInfo.setBackground(this.lightBrown);
-        String text;
-        for (int i=0; i < currentRace.getHorses().size(); i++)
-        {
-            Horse horse = currentRace.getHorses().get(i);
-            text = "Lane " + (i+1) + ": " + horse.getName();
-            text += " (confidence: " + horse.getConfidence() + ")";
-            Label label = getText(text);
-            horseInfo.add(label);
-        }
-        frame.add(horseInfo, BorderLayout.CENTER);
+
+        JPanel trackInfo = getPanel(1, 1, 10);
+
+        // Track length
+        JPanel editLength1 = getPanel(1, 2, 0);
+        JPanel editLength2 = getPanel(1, 2, 0);
+        Label label = getText("Track length:");
+        editLength1.add(label);
+        JTextField lengthInput = getTextField(Integer.toString(currentRace.getRaceLength()));
+        editLength2.add(lengthInput);
+        JButton updateButton = getButton("Update");
+        updateButton.addActionListener(e -> {
+            try{
+                int newLength = Integer.parseInt(lengthInput.getText());
+                if (newLength <= 1)
+                {
+                    addError("INV <= 1", lengthInput);
+                }
+                else if (newLength >= 100)
+                {
+                    addError("INV > 99", lengthInput);
+                }
+                currentRace.setRaceLength(newLength);
+                lengthInput.setEditable(false);
+                lengthInput.setCaretColor(warmWhite);
+            }
+            catch (NumberFormatException ex)
+            {
+                addError("INV num", lengthInput);
+            }
+        });
+        editLength2.add(updateButton);
+        editLength1.add(editLength2);
+        trackInfo.add(editLength1);
+
+        frame.add(trackInfo, BorderLayout.CENTER);
+
+        // Back to menu
         JPanel buttons = getButtons(new String[]{"Main Menu"});
         frame.add(buttons, BorderLayout.SOUTH);
         frame.getContentPane().setBackground(this.lightBrown);

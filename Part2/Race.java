@@ -32,6 +32,17 @@ public class Race
         return this.horses;
     }
 
+    public int getRaceLength()
+    {
+        return this.raceLength;
+    }
+
+    public void setRaceLength(int newLength)
+    {
+        this.raceLength = newLength;
+        return;
+    }
+
     // Main method
     public static void main(String[] args)
     {
