@@ -7,7 +7,7 @@ import java.lang.Math;
  * for a given distance
  * 
  * @author Vera Malkova
- * @version 20 April 2024
+ * @version 23 April 2024
  */
 public class Race
 {
@@ -27,11 +27,27 @@ public class Race
         horses = new ArrayList<Horse>();
     }
 
+    public ArrayList<Horse> getHorses()
+    {
+        return this.horses;
+    }
+
+    public int getRaceLength()
+    {
+        return this.raceLength;
+    }
+
+    public void setRaceLength(int newLength)
+    {
+        this.raceLength = newLength;
+        return;
+    }
+
     // Main method
     public static void main(String[] args)
     {
         Race race = new Race(5);
-        int num_lanes;
+        int numLanes;
         final String MENU = "Again (A) | New race (N) | Quit (Q)";
         String instruction = "N";
 
@@ -40,10 +56,11 @@ public class Race
             if (instruction.equals("N"))
             {
                 race = new Race(5);
-                num_lanes = 3;
-                for (int i = 0; i < num_lanes; i++)
+                numLanes = 3;
+                for (int i = 0; i < numLanes; i++)
                 {
-                    race.addHorse();
+                    Horse horse = race.generateHorse();
+                    race.addHorse(horse);
                 }
                 race.startRace();
             }
@@ -70,6 +87,32 @@ public class Race
         System.out.println(message);
         return scanner.nextLine().toUpperCase();
     }
+
+    public Horse generateHorse()
+    {
+        final Random RAND = new Random();
+        ArrayList<String> taken_names = new ArrayList<String>();
+        ArrayList<String> names = new ArrayList<String>(
+                                    Arrays.asList("ALBERT", "BERTIE", "CHARLIE", "DAISY",
+                                        "EDDIE", "FREDDIE", "GEORGE", "HARRY", "IVY", "JACK",
+                                        "KATIE", "LILY", "MOLLY", "NANCY", "OLLIE", "PENNY",
+                                        "QUEENIE", "ROSIE", "SOPHIE", "TOMMY", "URSULA",
+                                        "VICTOR", "WILLIE", "XANDER", "YVONNE", "ZARA"));
+        for (Horse horse : horses)
+        {
+            taken_names.add(horse.getName());
+        }
+        for (String name : taken_names) {
+            name = name.toUpperCase();
+            names.remove(name);
+        }
+        final int I = RAND.nextInt(names.size());
+
+        final double CONFIDENCE = (RAND.nextInt(9) + 1)/10.0;
+
+        Horse horse = new Horse(names.get(I).charAt(0), names.get(I).toUpperCase(), CONFIDENCE);
+        return horse;
+    }
     
     /**
      * Adds a horse to the race in a given lane
@@ -77,16 +120,15 @@ public class Race
      * @param theHorse the horse to be added to the race
      * @param laneNumber the lane that the horse will be added to
      */
-    public void addHorse()
+    public void addHorse(Horse theHorse)
     {
-        final Random RAND = new Random();
-        final String[] NAMES = {"Albert", "Bertie", "Charlie", "Daisy", "Eddie",
-                                "Fredy", "George", "Hannah", "Ivy", "Jack", "Katie"};
-        final double[] CONFIDENCES = {0.7, 0.6, 0.5, 0.4, 0.3};
-        final int i = RAND.nextInt(NAMES.length);
-        final int j = RAND.nextInt(CONFIDENCES.length);
+        horses.add(theHorse);
+    }
 
-        horses.add(new Horse(NAMES[i].charAt(0), NAMES[i].toUpperCase(), CONFIDENCES[j]));
+    public void removeHorse(Horse horse)
+    {
+        this.horses.remove(horse);
+        return;
     }
     
     /**
