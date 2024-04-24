@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
+import java.awt.event.*;
 
 public class RaceGUI {
     Race currentRace;
@@ -87,7 +89,7 @@ public class RaceGUI {
                 });
             }
         }
-        else
+        else if(!text.equals("Confirm"))
         {
             button.setPreferredSize(new Dimension(80, 30));
             button.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -157,6 +159,31 @@ public class RaceGUI {
         return textField;
     }
 
+    public <T> JComboBox<T> getDropDown(ArrayList<T> options)
+    {
+        T[] optionsArray = (T[]) options.toArray();
+        JComboBox<T> dropDown = new JComboBox<>(optionsArray);
+        dropDown.setPreferredSize(new Dimension(100, 30));
+        dropDown.setBackground(warmWhite);
+        dropDown.setForeground(darkBrown);
+        dropDown.setFont(new Font("Arial", Font.PLAIN, 16));
+        return dropDown;
+    }
+
+    public JPanel getHorse(Horse horse)
+    {
+        JPanel horsePanel;
+        horsePanel = getPanel(1, 2, 0);
+        Label horseSymbol = getText(Character.toString(horse.getSymbol()));
+        horseSymbol.setAlignment(Label.RIGHT);
+        horseSymbol.setForeground(horse.getColour());
+        horseSymbol.setFont(new Font("Arial", Font.PLAIN, 21));
+        horsePanel.add(horseSymbol);
+        Label horseAccessory = getText(horse.getAccessory());
+        horsePanel.add(horseAccessory);
+        return horsePanel;
+    }
+
     public void mainMenu()
     {
         JFrame frame = new JFrame("Horse Race Simulator");
@@ -197,12 +224,14 @@ public class RaceGUI {
         Label title = getTitle("Edit Track");
         frame.add(title, BorderLayout.NORTH);
 
-        JPanel trackInfo = getPanel(4+currentRace.getHorses().size(), 1, 10);
+        JPanel trackInfo = getPanel(5+currentRace.getHorses().size(), 1, 10);
 
         // Track length
-        JPanel editLength1 = getPanel(1, 2, 0);
+        trackInfo.add(getText("Change track length:"));
+        JPanel editLength1 = getPanel(1, 3, 0);
         JPanel editLength2 = getPanel(1, 2, 0);
-        Label label = getText("Track length:");
+        editLength1.add(getText(""));
+        Label label = getText("Track length (from 2 to 99):");
         editLength1.add(label);
         JTextField lengthInput = getTextField(Integer.toString(currentRace.getRaceLength()));
         editLength2.add(lengthInput);
@@ -237,7 +266,7 @@ public class RaceGUI {
         Label addHorseLabel = getText("Add Horse:");
         trackInfo.add(addHorseLabel);
         Horse horse = currentRace.generateHorse();
-        JPanel addHorse = getPanel(1, 4, 0);
+        JPanel addHorse = getPanel(1, 6, 0);
         JTextField horseName = getTextField(horse.getName());
         JTextField horseSpeed = getTextField("" + horse.getConfidence());
         JButton randomButton = getButton("Random");
@@ -249,7 +278,9 @@ public class RaceGUI {
             horseSpeed.setForeground(darkBrown);
         });
         addHorse.add(randomButton);
+        addHorse.add(getText("Name:"));
         addHorse.add(horseName);
+        addHorse.add(getText("Speed:"));
         addHorse.add(horseSpeed);
         JButton addHorseButton = getButton("Add");
         if (currentRace.getHorses().size() >= 10)
@@ -268,10 +299,18 @@ public class RaceGUI {
                     if (horseSpeed.getText().length() == 0 || horseSpeed.getText().equals("empty")) {
                         addError("empty", horseSpeed);
                     }
+                    name = name.toUpperCase();
+                    for (Horse h : currentRace.getHorses())
+                    {
+                        if (h.getName().equals(name))
+                        {
+                            addError("duplicate", horseName);
+                            return;
+                        }
+                    }
                     if (horseName.getForeground() == darkRed || horseSpeed.getForeground() == darkRed) {
                         return;
                     }
-                    name = name.toUpperCase();
                     double inputSpeed = Double.parseDouble(horseSpeed.getText());
                     double speed = (int)(inputSpeed*10)/10.0;
                     if (speed < 0.1)
@@ -298,18 +337,36 @@ public class RaceGUI {
         addHorse.add(addHorseButton);
         trackInfo.add(addHorse);
 
-        // Remove horses
-        String text;
-        trackInfo.add(getText("Remove Horse:"));
+        // Remove and edit horses
+        trackInfo.add(getText("Edit / Remove Horse:"));
         for (int i=0; i < currentRace.getHorses().size(); i++)
         {
-            JPanel horseRow = getPanel(1, 4, 0);
+            JPanel horseRow = getPanel(1, 6, 0);
             Horse currentHorse = currentRace.getHorses().get(i);
-            text = "Lane " + (i+1) + ": ";
+
+            // edit horse
+            JButton editButton = getButton("Edit");
+            editButton.addActionListener(e -> {
+                frame.dispose();
+                Horse editedHorse = new Horse(  currentHorse.getSymbol(), 
+                                                currentHorse.getName(), 
+                                                currentHorse.getConfidence());
+                editedHorse.setAccessory(currentHorse.getAccessory());
+                editedHorse.setSymbol(currentHorse.getSymbol());
+                editedHorse.setSymbolColour(currentHorse.getSymbolColour());
+                editHorse(currentHorse, editedHorse);
+            });
+            horseRow.add(editButton);
+
+            // horse info
+            String text = "Lane " + (i+1) + ":";
             horseRow.add(getText(text));
+            horseRow.add(getHorse(currentHorse));
             horseRow.add(getText(currentHorse.getName()));
             text = "Speed: " + currentHorse.getConfidence();
             horseRow.add(getText(text));
+
+            // remove horse
             JButton removeButton = getButton("Remove");
             if (currentRace.getHorses().size() <= 2)
             {
@@ -343,12 +400,106 @@ public class RaceGUI {
         return;
     }
 
+    public void editHorse(Horse originalHorse, Horse editedHorse)
+    {
+        JFrame frame = new JFrame("Horse Race Simulator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Label label = getTitle("Edit Horse");
+        frame.add(label, BorderLayout.NORTH);
+
+        JPanel horseEditor = getPanel(5, 2, 10);
+        
+        // Horse displayed while editing
+        horseEditor.add(getText(editedHorse.getName() + " (" + editedHorse.getConfidence() + ")"));
+        horseEditor.add(getHorse(editedHorse));
+
+        // Reset and cancel buttons
+        JButton reset = getButton("Reset");
+        reset.addActionListener(e -> {
+            frame.dispose();
+            editedHorse.setAccessory(originalHorse.getAccessory());
+            editedHorse.setSymbol(originalHorse.getSymbol());
+            editedHorse.setSymbolColour(originalHorse.getSymbolColour());
+            editHorse(originalHorse, editedHorse);
+        });
+        horseEditor.add(reset);
+        JButton cancel = getButton("Cancel");
+        cancel.addActionListener(e -> {
+            editedHorse.setSymbol(originalHorse.getSymbol());
+            frame.dispose();
+            editTrack();
+        });
+        horseEditor.add(cancel);
+
+        // Change accessory
+        horseEditor.add(getText("Accessory:"));
+        JComboBox accessories = getDropDown(editedHorse.getAccessories());
+        accessories.setSelectedItem(editedHorse.getAccessory());
+        accessories.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String newAccessory = (String) accessories.getSelectedItem();
+                editedHorse.setAccessory(newAccessory);
+                frame.dispose();
+                editHorse(originalHorse, editedHorse);
+            }
+        });
+        horseEditor.add(accessories);
+
+        // Change symbol
+        horseEditor.add(getText("Symbol:"));
+        JComboBox symbols = getDropDown(editedHorse.getSymbols());
+        symbols.setSelectedItem(editedHorse.getSymbol());
+        symbols.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                char newSymbol = (char) symbols.getSelectedItem();
+                editedHorse.setSymbol(newSymbol);
+                frame.dispose();
+                editHorse(originalHorse, editedHorse);
+            }
+        });
+        horseEditor.add(symbols);
+
+        // Change symbol colour
+        horseEditor.add(getText("Symbol Colour:"));
+        JComboBox colours = getDropDown(editedHorse.getColours());
+        colours.setSelectedItem(editedHorse.getSymbolColour());
+        colours.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String newColour = (String) colours.getSelectedItem();
+                editedHorse.setSymbolColour(newColour);
+                frame.dispose();
+                editHorse(originalHorse, editedHorse);
+            }
+        });
+        horseEditor.add(colours);
+
+        frame.add(horseEditor);
+
+        // Confirm button
+        JPanel buttons = getPanel(1,1,10);
+        JButton confirm = getButton("Confirm");
+        confirm.addActionListener(e -> {
+            frame.dispose();
+            originalHorse.setAccessory(editedHorse.getAccessory());
+            originalHorse.setSymbol(editedHorse.getSymbol());
+            originalHorse.setSymbolColour(editedHorse.getSymbolColour());
+            editTrack();
+        });
+        buttons.add(confirm);
+        frame.add(buttons, BorderLayout.SOUTH);
+        frame.getContentPane().setBackground(this.lightBrown);
+        frame.pack();
+        frame.setVisible(true);
+        return;
+    }
+
     public void startRaceGUI()
     {
         JFrame frame = new JFrame("Horse Race Simulator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Label label = getTitle("Horse race");
         frame.add(label, BorderLayout.NORTH);
+
         JPanel buttons = getButtons(new String[]{"Main Menu"});
         frame.add(buttons, BorderLayout.SOUTH);
         frame.getContentPane().setBackground(this.lightBrown);

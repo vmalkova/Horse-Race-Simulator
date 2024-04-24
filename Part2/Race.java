@@ -122,11 +122,20 @@ public class Race
      */
     public void addHorse(Horse theHorse)
     {
+        final Random RAND = new Random();
+        int num = RAND.nextInt(theHorse.getSymbols().size());
+        theHorse.setSymbol(theHorse.getSymbols().get(num));
+        num = RAND.nextInt(theHorse.getColours().size());
+        theHorse.setSymbolColour(theHorse.getColours().get(num));
+        num = RAND.nextInt(theHorse.getAccessories().size());
+        theHorse.setAccessory(theHorse.getAccessories().get(num));
         horses.add(theHorse);
+        return;
     }
 
     public void removeHorse(Horse horse)
     {
+        horse.deleteHorse();
         this.horses.remove(horse);
         return;
     }
