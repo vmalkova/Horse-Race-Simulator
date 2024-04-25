@@ -559,7 +559,7 @@ public class RaceGUI {
         Label time = getText("Time: 0.0 seconds");
 
         // update progress bars
-        int delay = 2500/race.getRaceLength();
+        int delay = 2000/race.getRaceLength();
         Timer timer = new Timer(delay, null);
         timer.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -573,7 +573,6 @@ public class RaceGUI {
                     progressBar.setString(horse.getDistanceTravelled() + "");
                     if (horse.hasFallen()) {
                         progressBar.setString("FALLEN");
-                        horse.decreaseConfidence(race.getRaceLength());
                     }
                     frame.pack();
                     frame.setVisible(true);
@@ -582,7 +581,7 @@ public class RaceGUI {
                 {
                     timer.stop();
                     frame.dispose();
-                    displayWinner(lanes);
+                    displayResults(lanes);
                 }
             }
         });
@@ -590,20 +589,20 @@ public class RaceGUI {
         timer.start();
 
         // quit
-        JPanel quitSpace = getPanel(1,3,10);
+        JPanel bottomRow = getPanel(1,3,10);
         JButton quitButton = getButton("Quit");
-        quitSpace.add(quitButton);
+        bottomRow.add(quitButton);
         quitButton.addActionListener(e -> {
             timer.stop();
             frame.dispose();
             mainMenu();
         });
-        quitSpace.add(getText(""));
-        quitSpace.add(time);
-        frame.add(quitSpace, BorderLayout.SOUTH);
+        bottomRow.add(getText(""));
+        bottomRow.add(time);
+        frame.add(bottomRow, BorderLayout.SOUTH);
     }
 
-    public void displayWinner(JPanel lanes)
+    public void displayResults(JPanel lanes)
     {
         JFrame frame = new JFrame("Horse Race Simulator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -615,7 +614,6 @@ public class RaceGUI {
             Label text = getText("All horses have fallen");
             text.setAlignment(Label.CENTER);
             frame.add(text, BorderLayout.CENTER);
-            return;
         }
         else
         {

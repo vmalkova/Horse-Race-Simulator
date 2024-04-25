@@ -220,6 +220,7 @@ public class Race
             }catch(Exception e){}
         }
 
+        updateConfidences();
         System.out.println();
         System.out.println("No winner");
         return;
@@ -264,7 +265,6 @@ public class Race
             if (Math.random() < (0.1*theHorse.getConfidence()*theHorse.getConfidence()))
             {
                 theHorse.fall();
-                theHorse.decreaseConfidence(raceLength);
                 return false;
             }
 
@@ -276,6 +276,28 @@ public class Race
             }
         }
         return false;
+    }
+
+    public void updateConfidences()
+    {
+        ArrayList<Horse> winners = this.getWinners();
+        ArrayList<Horse> fallen = this.getFallen();
+        for (Horse horse : this.horses)
+        {
+            if (winners.contains(horse))
+            {
+                horse.increaseConfidence();
+            }
+            else if (fallen.contains(horse))
+            {
+                horse.decreaseConfidence(raceLength);
+            }
+            else if(horse.getConfidence() < 0.9)
+            {
+                horse.setConfidence(horse.getConfidence() + 0.1);
+            }
+        }
+        return;
     }
         
     /** 
@@ -294,25 +316,28 @@ public class Race
                 winners.add(horse);
             }
         }
-        if (winners.size() == 0)
+        if (winners.size() > 0 || allFell())
         {
-            return false;
+            updateConfidences();
         }
-        System.out.println();
-        if (winners.size() == 1)
+        if (winners.size() > 0)
         {
-            System.out.println("Winner:");
+            System.out.println();
+            if (winners.size() == 1)
+            {
+                System.out.println("Winner:");
+            }
+            else{
+                System.out.println("Winners:");
+            }
+            for (Horse theHorse: winners)
+            {
+                System.out.print(" - " + theHorse.getName());
+                System.out.println(" (new confidence " + theHorse.getConfidence() + ") has won");
+            }
+            return true;
         }
-        else{
-            System.out.println("Winners:");
-        }
-        for (Horse theHorse: winners)
-        {
-            theHorse.increaseConfidence();
-            System.out.print(" - " + theHorse.getName());
-            System.out.println(" (new confidence " + theHorse.getConfidence() + ") has won");
-        }
-        return true;
+        return false;
     }
     
     /***
