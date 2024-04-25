@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.awt.event.*;
+import java.util.concurrent.TimeUnit;
+import javax.swing.Timer;
 
 public class RaceGUI {
     Race currentRace;
@@ -172,8 +174,11 @@ public class RaceGUI {
 
     public JPanel getHorse(Horse horse)
     {
-        JPanel horsePanel;
-        horsePanel = getPanel(1, 2, 0);
+        JPanel horsePanel = getPanel(1, 2, 0);
+        if (horse == null)
+        {
+            return horsePanel;
+        }
         Label horseSymbol = getText(Character.toString(horse.getSymbol()));
         horseSymbol.setAlignment(Label.RIGHT);
         horseSymbol.setForeground(horse.getColour());
@@ -182,6 +187,20 @@ public class RaceGUI {
         Label horseAccessory = getText(horse.getAccessory());
         horsePanel.add(horseAccessory);
         return horsePanel;
+    }
+
+    public JProgressBar getProgressBar(Horse horse)
+    {
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setMinimum(0);
+        progressBar.setMaximum(this.currentRace.getRaceLength());
+        progressBar.setString("0");
+        progressBar.setStringPainted(true);
+        progressBar.setValue(0);
+        UIManager.put("progressBar.selectionBackground", horse.getColour());
+        UIManager.put("progressBar.selectionForeground", horse.getColour());
+        progressBar.setPreferredSize(new Dimension(200, 30));
+        return progressBar;
     }
 
     public void mainMenu()
@@ -505,6 +524,169 @@ public class RaceGUI {
         frame.getContentPane().setBackground(this.lightBrown);
         frame.pack();
         frame.setVisible(true);
-        return;
+        
+        // start race
+        this.currentRace.resetLanes();
+        frame.dispose();
+        displayRace();
+    }
+
+    public void displayRace()
+    {
+        JFrame frame = new JFrame("Horse Race Simulator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(getTitle("Horse race"), BorderLayout.NORTH);
+        Race race = this.currentRace;
+        ArrayList<Horse> horses = race.getHorses();
+        ArrayList<JProgressBar> progressBars = new ArrayList<JProgressBar>();
+        JPanel lanes = getPanel(horses.size(), 1, 10);
+        for (Horse horse : horses)
+        {
+            JPanel lane = getPanel(1, 2, 0);
+            JPanel horseInfo = getPanel(1, 2, 0);
+            horseInfo.add(getHorse(horse));
+            horseInfo.add(getText(horse.getName() + " (" + horse.getConfidence() + ")"));
+            lane.add(horseInfo);
+            JProgressBar progressBar = getProgressBar(horse);
+            lane.add(progressBar);
+            progressBars.add(progressBar);
+            lanes.add(lane);
+        }
+        frame.add(lanes, BorderLayout.CENTER);
+        frame.getContentPane().setBackground(this.lightBrown);
+        frame.pack();
+
+        Label time = getText("Time: 0.0 seconds");
+
+        // update progress bars
+        int delay = 2500/race.getRaceLength();
+        Timer timer = new Timer(delay, null);
+        timer.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                race.setTime(race.getTime()+0.1);
+                time.setText("Time: " + race.getTime() + " seconds"); 
+                for (int i = 0; i < horses.size(); i++) {
+                    Horse horse = horses.get(i);
+                    race.moveHorse(horse);
+                    JProgressBar progressBar = progressBars.get(i);
+                    progressBar.setValue(horse.getDistanceTravelled());
+                    progressBar.setString(horse.getDistanceTravelled() + "");
+                    if (horse.hasFallen()) {
+                        progressBar.setString("FALLEN");
+                        horse.decreaseConfidence(race.getRaceLength());
+                    }
+                    frame.pack();
+                    frame.setVisible(true);
+                }
+                if (race.raceWon() || race.allFell())
+                {
+                    timer.stop();
+                    frame.dispose();
+                    displayWinner(lanes);
+                }
+            }
+        });
+
+        timer.start();
+
+        // quit
+        JPanel quitSpace = getPanel(1,3,10);
+        JButton quitButton = getButton("Quit");
+        quitSpace.add(quitButton);
+        quitButton.addActionListener(e -> {
+            timer.stop();
+            frame.dispose();
+            mainMenu();
+        });
+        quitSpace.add(getText(""));
+        quitSpace.add(time);
+        frame.add(quitSpace, BorderLayout.SOUTH);
+    }
+
+    public void displayWinner(JPanel lanes)
+    {
+        JFrame frame = new JFrame("Horse Race Simulator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        if(this.currentRace.allFell())
+        {
+            Label label = getTitle("No winner");
+            frame.add(label, BorderLayout.NORTH);
+            Label text = getText("All horses have fallen");
+            text.setAlignment(Label.CENTER);
+            frame.add(text, BorderLayout.CENTER);
+            return;
+        }
+        else
+        {
+            ArrayList<Horse> winners = this.currentRace.getWinners();
+            ArrayList<Horse> horses = this.currentRace.getHorses();
+            ArrayList<Horse> fallen = this.currentRace.getFallen();
+            JPanel centerPanel = getPanel(winners.size()*2+1+horses.size(), 1, 10);
+            JPanel titles = getPanel(1, 2, 0);
+            Label title = getTitle("Winner");;
+            if (winners.size() > 1)
+            {
+                title = getTitle("Winners");
+            }
+            titles.add(title);
+            if (fallen.size() > 0)
+            {
+                titles.add(getTitle("Fallen"));
+                frame.add(titles, BorderLayout.NORTH);
+
+                // display winners and fallen horses
+                int rows = 2 * Math.max(winners.size(), fallen.size()) + 1 + horses.size();
+                System.out.println(rows);
+                centerPanel = getPanel(rows, 1, 10);
+                for (int i=0; i<Math.max(winners.size(), fallen.size()); i++)
+                {
+                    Horse winner = winners.size() > i ? winners.get(i) : null;
+                    Horse faller = fallen.size() > i ? fallen.get(i) : null;
+                    JPanel row1 = getPanel(1, 2, 0);
+                    row1.add(getHorse(winner));
+                    row1.add(getHorse(faller));
+                    centerPanel.add(row1);
+
+                    JPanel row2 = getPanel(1, 2, 0);
+                    for (Horse h : new Horse[]{winner, faller})
+                    {
+                        Label nameSpeed = getText(" ");
+                        if (h != null)
+                        {
+                            nameSpeed.setText(h.getName() + " (new speed: " + h.getConfidence() + ")");
+                        }
+                        nameSpeed.setAlignment(Label.CENTER);
+                        row2.add(nameSpeed);
+                    }
+                    centerPanel.add(row2);
+                }
+            }
+            else
+            {
+                frame.add(title, BorderLayout.NORTH);
+                for (Horse h: winners)
+                {
+                    centerPanel.add(getHorse(h));
+                    Label nameSpeed = getText(h.getName() + " (new speed: " + h.getConfidence() + ")");
+                    nameSpeed.setAlignment(Label.CENTER);
+                    centerPanel.add(nameSpeed);
+                }
+            }
+            Label winnerTime = getText("Time: " + this.currentRace.getTime() + " seconds");
+            winnerTime.setAlignment(Label.CENTER);
+            centerPanel.add(winnerTime);
+            for (Component lane: lanes.getComponents())
+            {
+                centerPanel.add(lane);
+            }
+            frame.add(centerPanel, BorderLayout.CENTER);
+        }
+
+        JPanel buttons = getButtons(new String[]{"Start Race", "Main Menu"});
+        frame.add(buttons, BorderLayout.SOUTH);
+        frame.getContentPane().setBackground(this.lightBrown);
+        frame.pack();
+        frame.setVisible(true);
     }
 }

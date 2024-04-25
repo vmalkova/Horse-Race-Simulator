@@ -13,6 +13,7 @@ public class Race
 {
     private int raceLength;
     private ArrayList<Horse> horses;
+    private double time;
 
     /**
      * Constructor for objects of class Race
@@ -25,6 +26,25 @@ public class Race
         // initialise instance variables
         raceLength = distance;
         horses = new ArrayList<Horse>();
+        time = 0.0;
+    }
+
+    public double getTime()
+    {
+        return this.time;
+    }
+
+    public ArrayList<Horse> getWinners()
+    {
+        ArrayList<Horse> winners = new ArrayList<Horse>();
+        for (Horse horse : this.horses)
+        {
+            if (horse.getDistanceTravelled() == this.raceLength)
+            {
+                winners.add(horse);
+            }
+        }
+        return winners;
     }
 
     public ArrayList<Horse> getHorses()
@@ -37,6 +57,34 @@ public class Race
         return this.raceLength;
     }
 
+    public ArrayList<Horse> getFallen()
+    {
+        ArrayList<Horse> fallen = new ArrayList<Horse>();
+        for (Horse horse : this.horses)
+        {
+            if (horse.hasFallen())
+            {
+                fallen.add(horse);
+            }
+        }
+        return fallen;
+    }
+
+    public boolean allFell()
+    {
+        if (this.getFallen().size() >= this.horses.size())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public void setTime(double newTime)
+    {
+        newTime = Math.round(newTime * 10) / 10.0;
+        this.time = newTime;
+    }
+
     public void setRaceLength(int newLength)
     {
         this.raceLength = newLength;
@@ -46,7 +94,7 @@ public class Race
     // Main method
     public static void main(String[] args)
     {
-        Race race = new Race(5);
+        Race race = new Race(15);
         int numLanes;
         final String MENU = "Again (A) | New race (N) | Quit (Q)";
         String instruction = "N";
@@ -55,7 +103,7 @@ public class Race
         {
             if (instruction.equals("N"))
             {
-                race = new Race(5);
+                race = new Race(15);
                 numLanes = 3;
                 for (int i = 0; i < numLanes; i++)
                 {
@@ -147,27 +195,14 @@ public class Race
      * race is finished
      */
     public void startRace()
-    {   
+    {
         //reset all the lanes (all horses not fallen and back to 0). 
-        for (Horse horse : horses)
-        {
-            horse.goBackToStart();
-        }
-
-        int fallen_horses = 0;
+        resetLanes();
                       
-        while (fallen_horses < horses.size())
+        while (!allFell())
         {
             //move each horse
-            fallen_horses = 0;
-            for (Horse horse : horses)
-            {
-                moveHorse(horse);
-                if (horse.hasFallen())
-                {
-                    fallen_horses++;
-                }
-            }
+            this.moveHorses();
                         
             //print the race positions
             printRace();
@@ -181,11 +216,31 @@ public class Race
             //wait for 100 milliseconds
             try{ 
                 TimeUnit.MILLISECONDS.sleep(100);
+                time += 0.1;
             }catch(Exception e){}
         }
 
         System.out.println();
         System.out.println("No winner");
+        return;
+    }
+
+    public void moveHorses()
+    {
+        for (Horse horse : horses)
+        {
+            moveHorse(horse);
+        }
+        return;
+    }
+
+    public void resetLanes()
+    {
+        for (Horse horse : this.horses)
+        {
+            horse.goBackToStart();
+        }
+        time = 0.0;
         return;
     }
     
@@ -196,32 +251,31 @@ public class Race
      * 
      * @param theHorse the horse to be moved
      */
-    private void moveHorse(Horse theHorse)
+    public boolean moveHorse(Horse theHorse)
     {
         //if the horse has fallen it cannot move, 
         //so only run if it has not fallen
         
         if  (!theHorse.hasFallen())
         {
-            //the probability that the horse will move forward depends on the confidence;
-            if (Math.random() < theHorse.getConfidence())
-            {
-               theHorse.moveForward();
-            }
-            
             //the probability that the horse will fall is very small (max is 0.1)
             //but will also will depends exponentially on confidence 
             //so if you double the confidence, the probability that it will fall is *2
             if (Math.random() < (0.1*theHorse.getConfidence()*theHorse.getConfidence()))
             {
                 theHorse.fall();
-                final double OLD_CONF = theHorse.getConfidence();
-                double percent_done = (double)theHorse.getDistanceTravelled()/raceLength;
-                double new_conf = 0.1 + (0.4 + percent_done)*OLD_CONF*5/9;
-                new_conf = (int)(Math.round(new_conf*10))/10.0;
-                theHorse.setConfidence(new_conf);
+                theHorse.decreaseConfidence(raceLength);
+                return false;
+            }
+
+            //the probability that the horse will move forward depends on the confidence;
+            if (Math.random() < theHorse.getConfidence())
+            {
+               theHorse.moveForward();
+               return true;
             }
         }
+        return false;
     }
         
     /** 
@@ -230,7 +284,7 @@ public class Race
      * @param theHorse The horse we are testing
      * @return true if the horse has won, false otherwise.
      */
-    private boolean raceWon()
+    public boolean raceWon()
     {
         ArrayList<Horse> winners = new ArrayList<Horse>();
         for (Horse horse: this.horses)
@@ -254,13 +308,9 @@ public class Race
         }
         for (Horse theHorse: winners)
         {
-            final double OLD_CONF = theHorse.getConfidence();
-            double new_conf = 1.8*OLD_CONF - OLD_CONF*OLD_CONF;
-            new_conf = 0.1 + new_conf * 80 / 81;
-            new_conf = (int)(Math.round(new_conf*10))/10.0;
-            theHorse.setConfidence(new_conf);
+            theHorse.increaseConfidence();
             System.out.print(" - " + theHorse.getName());
-            System.out.println(" (new confidence " + new_conf + ") has won");
+            System.out.println(" (new confidence " + theHorse.getConfidence() + ") has won");
         }
         return true;
     }
@@ -271,7 +321,7 @@ public class Race
     private void printRace()
     {
         System.out.print('\u000C');  //clear the terminal window
-        
+
         multiplePrint('=',raceLength+3); //top edge of track
         System.out.println();
 

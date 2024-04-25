@@ -137,6 +137,24 @@ public class Horse
     {
         this.symbolColour = newSymbolColour;
     }
+
+    public void decreaseConfidence(int raceLength)
+    {
+        final double OLD_CONF = this.getConfidence();
+        double percent_done = (double)this.getDistanceTravelled()/raceLength;
+        double new_conf = 0.1 + (0.4 + percent_done)*OLD_CONF*5/9;
+        new_conf = (int)(Math.round(new_conf*10))/10.0;
+        this.setConfidence(new_conf);
+    }
+
+    public void increaseConfidence()
+    {
+        final double OLD_CONF = this.getConfidence();
+        double new_conf = 1.8*OLD_CONF - OLD_CONF*OLD_CONF;
+        new_conf = 0.1 + new_conf * 80 / 81;
+        new_conf = (int)(Math.round(new_conf*10))/10.0;
+        this.setConfidence(new_conf);
+    }
     
     public void goBackToStart()
     {
