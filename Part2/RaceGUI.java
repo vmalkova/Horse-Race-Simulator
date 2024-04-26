@@ -6,6 +6,7 @@ import javax.swing.Timer;
 
 public class RaceGUI {
     static IO io = new IO();
+    Horse bet = null;
     Race currentRace;
     Color lightBrown = new Color(222, 200, 175);
     Color brownWhite = new Color(253, 240, 228);
@@ -514,16 +515,101 @@ public class RaceGUI {
         Label label = getTitle("Horse race");
         frame.add(label, BorderLayout.NORTH);
 
+        ArrayList<Horse> horses = currentRace.getHorses();
+        JPanel horseBetting = getPanel(3 + horses.size(), 1, 10);
+        horseBetting.add(getText("Place your bets:"));
+        Betting betting = new Betting();
+        JPanel placeBets = getPanel(1,3,0);
+        placeBets.add(getText("Balance: " + betting.getBalance()));
+        JPanel inputPanel = getPanel(1, 2, 0);
+        Label betText = getText("Bet: " );
+        betText.setAlignment(Label.RIGHT);
+        inputPanel.add(betText);
+        JTextField betInput = getTextField(betting.getBet() + "");
+        inputPanel.add(betInput);
+        placeBets.add(inputPanel);
+        JButton cancelBet = getButton("Cancel");
+        placeBets.add(cancelBet);
+        horseBetting.add(placeBets);
+        ArrayList<JButton> betButtons = new ArrayList<JButton>();
+        for (Horse horse: currentRace.getHorses())
+        {
+            JPanel horseInfo = getPanel(1, 3, 0);
+            horseInfo.add(getHorse(horse));
+            horseInfo.add(getText(horse.getName() + " (" + horse.getConfidence() + ")"));
+            JButton betButton = getButton("Bet");
+            if (betting.getBalance() == 0 || this.bet == horse)
+            {
+                betButton.setEnabled(false);
+            }
+            betButtons.add(betButton);
+            horseInfo.add(betButton);
+            horseBetting.add(horseInfo);
+        }
+        cancelBet.addActionListener(e -> {
+            this.bet = null;
+            betInput.setText("0");
+            betInput.setEditable(false);
+            betInput.setCaretColor(warmWhite);
+            for (JButton button: betButtons)
+            {
+                button.setEnabled(true);
+            }
+        });
+        for (int i = 0; i < horses.size(); i++)
+        {
+            int index = i;
+            betButtons.get(i).addActionListener(e -> {
+                this.bet = horses.get(index);
+                for (JButton button: betButtons)
+                {
+                    button.setEnabled(true);
+                    betInput.setEditable(false);
+                    betInput.setCaretColor(warmWhite);
+                }
+                betButtons.get(index).setEnabled(false);
+            });
+        }
+        JButton startButton = getButton("Race");
+        startButton.addActionListener(e -> {
+            // place bet
+            if (this.bet != null)
+            {
+                try{
+                    int bet = Integer.parseInt(betInput.getText());
+                    if (bet > betting.getBalance())
+                    {
+                        addError("> " + betting.getBalance(), betInput);
+                        return;
+                    }
+                    if (bet < 0)
+                    {
+                        addError("< 0", betInput);
+                        return;
+                    }
+                    betting.setBet(bet);
+                    betting.subtractBalance();
+                }
+                catch (NumberFormatException ex)
+                {
+                    addError("INV num", betInput);
+                    return;
+                }
+            }
+            // start race
+            System.out.println("Start race");
+            this.currentRace.resetLanes();
+            frame.dispose();
+            displayRace();
+        });
+        horseBetting.add(startButton);
+        frame.add(horseBetting, BorderLayout.CENTER);
+
         JPanel buttons = getButtons(new String[]{"Main Menu"});
         frame.add(buttons, BorderLayout.SOUTH);
         frame.getContentPane().setBackground(this.lightBrown);
         frame.pack();
         frame.setVisible(true);
-        
-        // start race
-        this.currentRace.resetLanes();
-        frame.dispose();
-        displayRace();
     }
 
     public void displayRace()
@@ -593,7 +679,13 @@ public class RaceGUI {
             frame.dispose();
             mainMenu();
         });
-        bottomRow.add(getText(""));
+        Label betText = getText("");
+        if (this.bet != null)
+        {
+            betText.setText("Your bet: " + this.bet.getName());
+        }
+        betText.setAlignment(Label.CENTER);
+        bottomRow.add(betText);
         bottomRow.add(time);
         frame.add(bottomRow, BorderLayout.SOUTH);
     }
@@ -602,23 +694,29 @@ public class RaceGUI {
     {
         JFrame frame = new JFrame("Horse Race Simulator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        ArrayList<Horse> winners = this.currentRace.getWinners();
+        ArrayList<Horse> horses = this.currentRace.getHorses();
+        ArrayList<Horse> fallen = this.currentRace.getFallen();
         io.saveHorses(this.currentRace);
-        io.saveRace(currentRace);
-
+        io.saveRace(this.currentRace);
+        int rows = winners.size()*2 + 1 + horses.size();
+        if (fallen.size() > winners.size())
+        {
+            rows += (fallen.size() - winners.size())*2;
+        }
         if(this.currentRace.allFell())
         {
             Label label = getTitle("No winner");
             frame.add(label, BorderLayout.NORTH);
-            Label text = getText("All horses have fallen");
-            text.setAlignment(Label.CENTER);
-            frame.add(text, BorderLayout.CENTER);
+            rows = horses.size();
         }
-        else
+        if (this.bet != null)
         {
-            ArrayList<Horse> winners = this.currentRace.getWinners();
-            ArrayList<Horse> horses = this.currentRace.getHorses();
-            ArrayList<Horse> fallen = this.currentRace.getFallen();
-            JPanel centerPanel = getPanel(winners.size()*2+1+horses.size(), 1, 10);
+            rows += 2;
+        }
+        JPanel centerPanel = getPanel(rows, 1, 10);
+        if (!this.currentRace.allFell())
+        {
             JPanel titles = getPanel(1, 2, 0);
             Label title = getTitle("Winner");;
             if (winners.size() > 1)
@@ -632,8 +730,6 @@ public class RaceGUI {
                 frame.add(titles, BorderLayout.NORTH);
 
                 // display winners and fallen horses
-                int rows = 2 * Math.max(winners.size(), fallen.size()) + 1 + horses.size();
-                centerPanel = getPanel(rows, 1, 10);
                 for (int i=0; i<Math.max(winners.size(), fallen.size()); i++)
                 {
                     Horse winner = winners.size() > i ? winners.get(i) : null;
@@ -671,12 +767,28 @@ public class RaceGUI {
             Label winnerTime = getText("Time: " + this.currentRace.getTime() + "s");
             winnerTime.setAlignment(Label.CENTER);
             centerPanel.add(winnerTime);
-            for (Component lane: lanes.getComponents())
-            {
-                centerPanel.add(lane);
-            }
-            frame.add(centerPanel, BorderLayout.CENTER);
         }
+        if (this.bet != null)
+        {
+            Label yourBet = getText("Your bet: " + this.bet.getName());
+            yourBet.setFont(new Font(yourBet.getFont().getName(), Font.BOLD, yourBet.getFont().getSize()));
+            yourBet.setAlignment(Label.CENTER);
+            centerPanel.add(yourBet);
+            Betting betting = new Betting();
+            Label win = getText("Balance: " + betting.getBalance() + " (-" + betting.getBet() + ")");
+            if (winners.contains(this.bet))
+            {
+                betting.addBalance();
+                win = getText("Balance: " + betting.getBalance() + " (+" + betting.getBet() + ")");
+            }
+            win.setAlignment(Label.CENTER);
+            centerPanel.add(win);
+        }
+        for (Component lane: lanes.getComponents())
+        {
+            centerPanel.add(lane);
+        }
+        frame.add(centerPanel, BorderLayout.CENTER);
 
         JPanel buttons = getButtons(new String[]{"Start Race", "Main Menu"});
         frame.add(buttons, BorderLayout.SOUTH);
