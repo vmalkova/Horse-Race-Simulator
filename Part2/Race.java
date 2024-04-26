@@ -170,13 +170,17 @@ public class Race
      */
     public void addHorse(Horse theHorse)
     {
-        final Random RAND = new Random();
-        int num = RAND.nextInt(theHorse.getSymbols().size());
-        theHorse.setSymbol(theHorse.getSymbols().get(num));
-        num = RAND.nextInt(theHorse.getColours().size());
-        theHorse.setSymbolColour(theHorse.getColours().get(num));
-        num = RAND.nextInt(theHorse.getAccessories().size());
-        theHorse.setAccessory(theHorse.getAccessories().get(num));
+        IO io = new IO();
+        if (!io.restore(theHorse))
+        {
+            final Random RAND = new Random();
+            int num = RAND.nextInt(theHorse.getSymbols().size());
+            theHorse.setSymbol(theHorse.getSymbols().get(num));
+            num = RAND.nextInt(theHorse.getColours().size());
+            theHorse.setSymbolColour(theHorse.getColours().get(num));
+            num = RAND.nextInt(theHorse.getAccessories().size());
+            theHorse.setAccessory(theHorse.getAccessories().get(num));
+        }
         horses.add(theHorse);
         return;
     }
@@ -219,7 +223,6 @@ public class Race
                 time += 0.1;
             }catch(Exception e){}
         }
-
         updateConfidences();
         System.out.println();
         System.out.println("No winner");
@@ -264,6 +267,7 @@ public class Race
             //so if you double the confidence, the probability that it will fall is *2
             if (Math.random() < (0.1*theHorse.getConfidence()*theHorse.getConfidence()))
             {
+                theHorse.addSpeed(theHorse.getDistanceTravelled()/this.time);
                 theHorse.fall();
                 return false;
             }
@@ -284,18 +288,24 @@ public class Race
         ArrayList<Horse> fallen = this.getFallen();
         for (Horse horse : this.horses)
         {
-            if (winners.contains(horse))
-            {
-                horse.increaseConfidence();
-            }
-            else if (fallen.contains(horse))
+            if (fallen.contains(horse))
             {
                 horse.decreaseConfidence(raceLength);
             }
-            else if(horse.getConfidence() < 0.9)
+            else
             {
-                horse.setConfidence(horse.getConfidence() + 0.1);
+                horse.addSpeed(horse.getDistanceTravelled()/this.time);
+                if (winners.contains(horse))
+                {
+                    horse.addWin();
+                    horse.increaseConfidence();
+                }
+                else if(horse.getConfidence() < 0.9)
+                {
+                    horse.setConfidence(horse.getConfidence() + 0.1);
+                }
             }
+            horse.addRace();
         }
         return;
     }
@@ -315,10 +325,6 @@ public class Race
             {
                 winners.add(horse);
             }
-        }
-        if (winners.size() > 0 || allFell())
-        {
-            updateConfidences();
         }
         if (winners.size() > 0)
         {

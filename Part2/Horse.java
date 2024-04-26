@@ -24,6 +24,9 @@ public class Horse
     private String accessory;
     private static HashMap<String, Color> colors;
     private String symbolColour;
+    private int wins;
+    private int racesComplete;
+    private double avgSpeed;
     
     //Constructor of class Horse
 
@@ -64,6 +67,45 @@ public class Horse
     }
     
     //Other methods of class Horse
+    public int getWins()
+    {
+        return this.wins;
+    }
+
+    public int getRacesComplete()
+    {
+        return this.racesComplete;
+    }
+
+    public void addWin()
+    {
+        this.wins++;
+    }
+
+    public void addRace()
+    {
+        this.racesComplete++;
+    }
+
+    public double getAverageSpeed()
+    {
+        return this.avgSpeed;
+    }
+
+    public void setAverageSpeed(double speed)
+    {
+        this.avgSpeed = (int)(Math.round(speed*10))/10.0;
+    }
+
+    public double addSpeed(double speed)
+    {
+        speed = (int)(Math.round(speed*10))/10.0;
+        double totalSpeed = speed + this.avgSpeed*(this.racesComplete);
+        double averageSpeed = totalSpeed/(this.racesComplete+1);
+        setAverageSpeed(averageSpeed);
+        return this.avgSpeed;
+    }
+
     public void fall()
     {
         this.hasFallen = true;
@@ -136,6 +178,16 @@ public class Horse
     public void setSymbolColour(String newSymbolColour)
     {
         this.symbolColour = newSymbolColour;
+    }
+
+    public void setWins(int newWins)
+    {
+        this.wins = newWins;
+    }
+
+    public void setRacesComplete(int newRacesComplete)
+    {
+        this.racesComplete = newRacesComplete;
     }
 
     public void decreaseConfidence(int raceLength)

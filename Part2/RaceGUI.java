@@ -2,10 +2,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.awt.event.*;
-import java.util.concurrent.TimeUnit;
 import javax.swing.Timer;
 
 public class RaceGUI {
+    static IO io = new IO();
     Race currentRace;
     Color lightBrown = new Color(222, 200, 175);
     Color brownWhite = new Color(253, 240, 228);
@@ -199,8 +199,17 @@ public class RaceGUI {
         progressBar.setValue(0);
         UIManager.put("progressBar.selectionBackground", horse.getColour());
         UIManager.put("progressBar.selectionForeground", horse.getColour());
-        progressBar.setPreferredSize(new Dimension(200, 30));
+        progressBar.setPreferredSize(new Dimension(300, 30));
         return progressBar;
+    }
+
+    public JScrollPane getScrollPane(JPanel panel)
+    {
+        JScrollPane scrollPane = new JScrollPane(panel);
+        scrollPane.setPreferredSize(new Dimension(300, 300));
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getViewport().setBackground(lightBrown);
+        return scrollPane;
     }
 
     public void mainMenu()
@@ -221,20 +230,6 @@ public class RaceGUI {
         return;
     }
 
-    public void raceHistory()
-    {
-        JFrame frame = new JFrame("Horse Race Simulator");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        Label label = getTitle("Statistics and Analytics");
-        frame.add(label, BorderLayout.NORTH);
-        JPanel buttons = getButtons(new String[]{"Main Menu"});
-        frame.add(buttons, BorderLayout.SOUTH);
-        frame.getContentPane().setBackground(this.lightBrown);
-        frame.pack();
-        frame.setVisible(true);
-        return;
-    }
-
     public void editTrack()
     {
         // Title
@@ -250,7 +245,7 @@ public class RaceGUI {
         JPanel editLength1 = getPanel(1, 3, 0);
         JPanel editLength2 = getPanel(1, 2, 0);
         editLength1.add(getText(""));
-        Label label = getText("Track length (from 2 to 99):");
+        Label label = getText("Track length (from 2-99 m):");
         editLength1.add(label);
         JTextField lengthInput = getTextField(Integer.toString(currentRace.getRaceLength()));
         editLength2.add(lengthInput);
@@ -293,7 +288,7 @@ public class RaceGUI {
             Horse newHorse = currentRace.generateHorse();
             horseName.setText(newHorse.getName());
             horseName.setForeground(darkBrown);
-            horseSpeed.setText("" + newHorse.getConfidence());
+            horseSpeed.setText(newHorse.getConfidence() + "");
             horseSpeed.setForeground(darkBrown);
         });
         addHorse.add(randomButton);
@@ -556,7 +551,7 @@ public class RaceGUI {
         frame.getContentPane().setBackground(this.lightBrown);
         frame.pack();
 
-        Label time = getText("Time: 0.0 seconds");
+        Label time = getText("Time: 0.0s");
 
         // update progress bars
         int delay = 2000/race.getRaceLength();
@@ -564,7 +559,7 @@ public class RaceGUI {
         timer.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 race.setTime(race.getTime()+0.1);
-                time.setText("Time: " + race.getTime() + " seconds"); 
+                time.setText("Time: " + race.getTime() + "s"); 
                 for (int i = 0; i < horses.size(); i++) {
                     Horse horse = horses.get(i);
                     race.moveHorse(horse);
@@ -581,6 +576,7 @@ public class RaceGUI {
                 {
                     timer.stop();
                     frame.dispose();
+                    race.updateConfidences();
                     displayResults(lanes);
                 }
             }
@@ -606,6 +602,8 @@ public class RaceGUI {
     {
         JFrame frame = new JFrame("Horse Race Simulator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        io.saveHorses(this.currentRace);
+        io.saveRace(currentRace);
 
         if(this.currentRace.allFell())
         {
@@ -635,7 +633,6 @@ public class RaceGUI {
 
                 // display winners and fallen horses
                 int rows = 2 * Math.max(winners.size(), fallen.size()) + 1 + horses.size();
-                System.out.println(rows);
                 centerPanel = getPanel(rows, 1, 10);
                 for (int i=0; i<Math.max(winners.size(), fallen.size()); i++)
                 {
@@ -671,7 +668,7 @@ public class RaceGUI {
                     centerPanel.add(nameSpeed);
                 }
             }
-            Label winnerTime = getText("Time: " + this.currentRace.getTime() + " seconds");
+            Label winnerTime = getText("Time: " + this.currentRace.getTime() + "s");
             winnerTime.setAlignment(Label.CENTER);
             centerPanel.add(winnerTime);
             for (Component lane: lanes.getComponents())
@@ -686,5 +683,75 @@ public class RaceGUI {
         frame.getContentPane().setBackground(this.lightBrown);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    public void raceHistory()
+    {
+        JFrame frame = new JFrame("Horse Race Simulator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Label label = getTitle("Statistics and Analytics");
+        frame.add(label, BorderLayout.NORTH);
+        JPanel options = getPanel(3,1,10);
+        JButton horseButton = getButton("Horse Statistics");
+        horseButton.addActionListener(e -> {
+            frame.dispose();
+            horseStats();
+        });
+        options.add(horseButton);
+        JButton raceButton = getButton("Race Statistics");
+        raceButton.addActionListener(e -> {
+            frame.dispose();
+            raceStats();
+        });
+        options.add(raceButton);
+        JButton resetButton = getButton("Erase History");
+        resetButton.addActionListener(e -> {
+            io.reset();
+            frame.dispose();
+            raceHistory();
+        });
+        if (io.isEmpty())
+        {
+            resetButton.setEnabled(false);
+        }
+        options.add(resetButton);
+        frame.add(options, BorderLayout.CENTER);
+        frame.add(getButtons(new String[]{"Main Menu"}), BorderLayout.SOUTH);
+        frame.getContentPane().setBackground(this.lightBrown);
+        frame.pack();
+        frame.setVisible(true);
+        return;
+    }
+
+    public void horseStats()
+    {
+        JFrame frame = new JFrame("Horserace Simulator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Label label = getTitle("Horse Statistics");
+        frame.add(label, BorderLayout.NORTH);
+        IO io = new IO();
+        JScrollPane horseStats = io.drawHorses();
+        frame.add(horseStats, BorderLayout.CENTER);
+        frame.add(getButtons(new String[]{"View Statistics", "Main Menu"}), BorderLayout.SOUTH);
+        frame.getContentPane().setBackground(this.lightBrown);
+        frame.pack();
+        frame.setVisible(true);
+        return;
+    }
+
+    public void raceStats()
+    {
+        JFrame frame = new JFrame("Horserace Simulator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Label label = getTitle("Race Statistics");
+        frame.add(label, BorderLayout.NORTH);
+        IO io = new IO();
+        JScrollPane raceStats = io.drawRaces();
+        frame.add(raceStats, BorderLayout.CENTER);
+        frame.add(getButtons(new String[]{"View Statistics", "Main Menu"}), BorderLayout.SOUTH);
+        frame.getContentPane().setBackground(this.lightBrown);
+        frame.pack();
+        frame.setVisible(true);
+        return;
     }
 }
