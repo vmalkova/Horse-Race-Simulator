@@ -1,3 +1,6 @@
+import java.awt.*;
+import java.util.*;
+
 /**
  * The class Horse represents a horse in a race
  * It can move forward, fall, go back to start, 
@@ -16,13 +19,20 @@ public class Horse
     private int distanceTravelled;
     private boolean hasFallen;
     private double confidence;
+    private ArrayList<String> accessories;
+    private static ArrayList<Character> symbols;
+    private String accessory;
+    private static HashMap<String, Color> colors;
+    private String symbolColour;
+    private int wins;
+    private int racesComplete;
+    private double avgSpeed;
     
-      
     //Constructor of class Horse
 
     /**
      * Constructor for objects of class Horse
-     */
+    */
     public Horse(char horseSymbol, String horseName, double horseConfidence)
     {
         this.symbol = horseSymbol;
@@ -30,9 +40,72 @@ public class Horse
         this.confidence = horseConfidence;
         this.distanceTravelled = 0;
         this.hasFallen = false;
+        this.accessories = new ArrayList<String>(
+                            Arrays.asList("None" , "\uD83E\uDDE2"
+                            , "\uD83E\uDDE3",  "\uD83C\uDFA9"
+                            , "\uD83D\uDD76", "\uD83C\uDF80"));
+        this.accessory = " ";
+        if (symbols == null)
+        {
+            symbols = new ArrayList<Character>();
+            for (int i = 9812; i <= 9823; i++) {
+                symbols.add((char) i);
+            }
+        }
+        else if (symbols.contains((Character) horseSymbol))
+        {
+            symbols.remove((Character) horseSymbol);
+        }
+        colors = new HashMap<String, Color>();
+        colors.put("BLACK", Color.BLACK);
+        colors.put("PURPLE", new Color(100, 0, 120));
+        colors.put("BLUE", new Color(0, 50, 160));
+        colors.put("CYAN", new Color(0, 90, 110));
+        colors.put("GREEN", new Color(0, 80, 5));
+        colors.put("RED", new Color(130, 8, 4));
+        symbolColour = "BLACK";
     }
     
     //Other methods of class Horse
+    public int getWins()
+    {
+        return this.wins;
+    }
+
+    public int getRacesComplete()
+    {
+        return this.racesComplete;
+    }
+
+    public void addWin()
+    {
+        this.wins++;
+    }
+
+    public void addRace()
+    {
+        this.racesComplete++;
+    }
+
+    public double getAverageSpeed()
+    {
+        return this.avgSpeed;
+    }
+
+    public void setAverageSpeed(double speed)
+    {
+        this.avgSpeed = (int)(Math.round(speed*10))/10.0;
+    }
+
+    public double addSpeed(double speed)
+    {
+        speed = (int)(Math.round(speed*10))/10.0;
+        double totalSpeed = speed + this.avgSpeed*(this.racesComplete);
+        double averageSpeed = totalSpeed/(this.racesComplete+1);
+        setAverageSpeed(averageSpeed);
+        return this.avgSpeed;
+    }
+
     public void fall()
     {
         this.hasFallen = true;
@@ -57,6 +130,81 @@ public class Horse
     {
         return this.symbol;
     }
+
+    public ArrayList<String> getAccessories()
+    {
+        return this.accessories;
+    }
+
+    public ArrayList<Character> getSymbols()
+    {
+        ArrayList<Character> availableSymbols = new ArrayList<Character>(symbols);
+        if ((char) 9812 <= this.symbol && this.symbol <= (char) 9823)
+        {
+            availableSymbols.add(this.symbol);
+        }
+        return availableSymbols;
+    }
+
+    public String getAccessory()
+    {
+        return this.accessory;
+    }
+
+    public String getSymbolColour()
+    {
+        return this.symbolColour;
+    }
+
+    public ArrayList<String> getColours()
+    {
+        return new ArrayList<String>(colors.keySet());
+    }
+
+    public Color getColour()
+    {
+        return colors.get(this.symbolColour);
+    }
+
+    public void setAccessory(String newAccessory)
+    {
+        if (newAccessory.equals("None"))
+        {
+            newAccessory = " ";
+        }
+        this.accessory = newAccessory;
+    }
+
+    public void setSymbolColour(String newSymbolColour)
+    {
+        this.symbolColour = newSymbolColour;
+    }
+
+    public void setWins(int newWins)
+    {
+        this.wins = newWins;
+    }
+
+    public void setRacesComplete(int newRacesComplete)
+    {
+        this.racesComplete = newRacesComplete;
+    }
+
+    public void decreaseConfidence(int raceLength)
+    {
+        final double OLD_CONF = this.getConfidence();
+        double percent_done = (double)this.getDistanceTravelled()/raceLength;
+        double new_conf = 0.1 + (0.4 + percent_done)*OLD_CONF*5/9;
+        this.setConfidence(new_conf);
+    }
+
+    public void increaseConfidence()
+    {
+        final double OLD_CONF = this.getConfidence();
+        double new_conf = 1.8*OLD_CONF - OLD_CONF*OLD_CONF;
+        new_conf = 0.1 + new_conf * 80 / 81;
+        this.setConfidence(new_conf);
+    }
     
     public void goBackToStart()
     {
@@ -76,12 +224,32 @@ public class Horse
 
     public void setConfidence(double newConfidence)
     {
+        newConfidence = (int)(Math.round(newConfidence*10))/10.0;
         this.confidence = newConfidence;
     }
     
-    public void setSymbol(char newSymbol)
+    public void setSymbol(Character newSymbol)
     {
+        if (((char) 9812 <= this.symbol && this.symbol <= (char) 9823))
+        {
+            if (!symbols.contains(this.symbol))
+            {
+                symbols.add(this.symbol);
+            }
+        }
         this.symbol = newSymbol;
+        symbols.remove(newSymbol);
+    }
+
+    public void deleteHorse()
+    {
+        if ((char) 9812 <= this.symbol && this.symbol <= (char) 9823)
+        {
+            if (!symbols.contains(this.symbol))
+            {
+                symbols.add(this.symbol);
+            }
+        }
     }
 
     public static void test()
